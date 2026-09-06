@@ -1,7 +1,7 @@
 ##  생성형 AI 활용 교육 (n8n x AI 업무 자동화) 
 <br>
 
-### [세종] :  (2026.09.07 ~ 10.08 , 80Hr)
+### [충북] :  (2026.09.07 ~ 10.08 , 80Hr)
 https://ict-is.cbist.or.kr/education/view.do?educationKey=433&searchActiveFlag=Y&searchCategory=ai&searchArea=%EC%B6%A9%EB%B6%81&currentPageNo=1&menuKey=79
 <br>
 <br>
