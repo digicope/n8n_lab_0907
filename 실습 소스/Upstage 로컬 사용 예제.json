@@ -1,0 +1,151 @@
+{
+  "name": "Upstage 로컬 사용 예제",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pdf-agent",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -304,
+        -192
+      ],
+      "id": "636e8623-86e3-4bad-99ba-392948caf8df",
+      "name": "Webhook",
+      "webhookId": "64046b9a-d7c8-4802-8c7b-e7f197a387f6"
+    },
+    {
+      "parameters": {
+        "binaryPropertyName": "file"
+      },
+      "type": "n8n-nodes-upstage.documentParsingUpstage",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -192
+      ],
+      "id": "48b5e1a2-d4d9-42f2-b971-91dc598b5710",
+      "name": "Upstage Document Parse",
+      "credentials": {
+        "upstageApi": {
+          "id": "F1UkVsVSrDLFVo99",
+          "name": "Upstage account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=당신은 기업 문서 분석 전문가입니다.\n아래 Markdown 문서를 한국어로 분석하여 요약 리포트를 작성하세요.\n\n[문서 제목]\n\n\n[원문]\n{{ $json.content.html }}\n\n아래 형식으로 작성하세요:\n\n## 한 줄 요약\n(1문장)\n\n## 핵심 내용\n- (불릿 3~5개)\n\n## 주요 키워드\n(쉼표로 구분)\n\n## 후속 조치 제안\n- (불릿 1~2개)",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        144,
+        -192
+      ],
+      "id": "6f28c1c0-d2bb-45f2-98a8-9f3449bef964",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "solar-mini",
+        "options": {}
+      },
+      "type": "n8n-nodes-upstage.lmChatModelUpstage",
+      "typeVersion": 1,
+      "position": [
+        144,
+        32
+      ],
+      "id": "bde75945-9548-4b9d-a603-1044103fcf80",
+      "name": "Upstage Solar Chat for Agent",
+      "credentials": {
+        "upstageApi": {
+          "id": "F1UkVsVSrDLFVo99",
+          "name": "Upstage account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        496,
+        -192
+      ],
+      "id": "f5169fae-3e34-4a8b-bbed-66f0084f7c0a",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Upstage Document Parse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upstage Document Parse": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upstage Solar Chat for Agent": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ff60009b-eefe-407f-81da-b0a87e6462d1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "32a1eb373b64645aec96b151b81f28c25f23be18314225866416db20de5c880f"
+  },
+  "nodeGroups": [],
+  "id": "VUBILWTHH0Hfo9Ue",
+  "tags": []
+}

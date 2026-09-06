@@ -1,0 +1,107 @@
+{
+  "name": "로컬에서 Gmail 보내기 예제",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        -48
+      ],
+      "id": "9a1e1685-57da-4647-92ba-dafa09c75b89",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1036e1e-c9ba-4b74-a5d5-99e590f899b1",
+              "name": "title",
+              "value": "n8n 테스트 메일",
+              "type": "string"
+            },
+            {
+              "id": "d10d196d-03c9-4ffb-9f1f-8f8630e4f6de",
+              "name": "body",
+              "value": "n8n 로컬에서 보낸 메일입니다",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -112,
+        -48
+      ],
+      "id": "73bec1e7-b47c-439b-8543-7cb83ff15b81",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "fromEmail": "digicope@aicore.co.kr",
+        "toEmail": "digicope@aicore.co.kr",
+        "subject": "={{ $json.title }}",
+        "html": "={{ $json.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        96,
+        -48
+      ],
+      "id": "85b0cc82-a679-4d48-bb9e-fec2c27a7596",
+      "name": "Send an Email",
+      "webhookId": "7d291f5a-e350-4751-861a-7dd96395b98d",
+      "credentials": {
+        "smtp": {
+          "id": "Rq8NMgPaRmaylX9c",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "8db98e07-502a-4916-8b04-e3ca076bb250",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "32a1eb373b64645aec96b151b81f28c25f23be18314225866416db20de5c880f"
+  },
+  "nodeGroups": [],
+  "id": "dS9JSAWldXVuUfJu",
+  "tags": []
+}

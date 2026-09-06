@@ -1,0 +1,153 @@
+[카카오톡 API(나에게 보내기) 설정 방법]
+------------------------------------------------------
+- 카카오톡 사이트 설정 부분 -
+
+1. https://developers.kakao.com/ 에서 회원 가입
+
+2. 메뉴의 [앱]에 들어가서  우측 상단의 [+앱생성] 클릭하여 앱을 생성
+   앱이름예:  n8n_master
+
+3. 좌측 메뉴의 앱 --> 플랫폼 키 : REST API 키 에서 REST API 키에서 Default Rest API Key 클릭
+   REST API 키 수정 페이지에서 카카오 로그인 리다이렉트 URI에 아래 주소 입력
+   https://oauth.n8n.cloud/oauth2/callback
+
+4. 하단 클라이언트 시크릿의 카카오 로그인의 코드 복사해서 메모장에 복사해둔다
+   0BXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+   우측 하단의 [저장]버튼을 클릭한다
+
+5. 좌측 메뉴의 카카오 로그인 의 일반 클릭
+  사용설정을 ON 으로 설정한다
+
+6. 카카오 로그인의 동의 항목 메뉴 클릭
+ 접근권한 메뉴에서 카카오톡 메시지 전송에서 설정 버튼 클릭
+ 이용중 동의로 선탹하고 저장한다
+------------------------------------------------
+- n8n 워크플로우 설정 부분 -
+1. 아래 텍스트를 복사하여 n8n의 워크플로우 캔버스에 아무데나 가서
+  Ctrl-V를 쳐서 붙여 넣는다
+
+{
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://kapi.kakao.com/v2/api/talk/memo/default/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded;charset=utf-8"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "template_object",
+              "value": "={\n        \"object_type\": \"text\",\n        \"text\": \"test reply\",\n        \"link\": {\n            \"web_url\": \"https://developers.kakao.com\",\n            \"mobile_web_url\": \"https://developers.kakao.com\"\n        },\n        \"button_title\": \"바로 확인\"\n    }"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        608,
+        32
+      ],
+      "id": "9518d7a1-e094-4bbd-b4d9-9cce3ade096e",
+      "name": "카톡 내게쓰기",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "1I6a83kWKzoFxMsb",
+          "name": "KAKAO 설정"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "카톡 내게쓰기": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ab9a1454bcda8e3ebf7fd7d9e3347cb873e37ff49f3f6d5a73837eb9628ba0ea"
+  }
+}
+
+2. 카톡 내게쓰기가 만들어지면 클릭해서 아래와 같이 속성을 변경한다
+Method : POST
+URL : https://kapi.kakao.com/v2/api/talk/memo/default/send
+
+3. OAuth2 API에서 Setup credential을 클릭하고 OAuth Redirect URL 에 아래와 같이를 주소를 각각 넣는다
+ OAuth Redirect URL :  https://oauth.n8n.cloud/oauth2/callback
+ Authorization URL : https://kauth.kakao.com/oauth/authorize
+ Access Token URL : https://kauth.kakao.com/oauth/token
+
+4. Client ID 에는 REST API 키를 입력한다
+   Client Secret 에는 클라이언트 시크릿의 카카오 로그인 코드를 입력한다
+   (위 카카오톡 설정 4번에서 복사해 놓은거)
+
+5. Scope : talk_message 라고 입력한다
+   (접근 권한에서 카카오톡 메시지 전송의 ID이다)
+
+6. Authentication : Body 로 변경한다
+
+7. 하단의 [Connect] 버튼을 클릭한다 카카오톡 접속창이 뜨면 
+  "카카오톡 메시지 전송"응 반드시 체크하여 선택해주고 "동의하고 계속하기"를 누른다
+   광고 관련 선택 내용은 선택하지 않는다
+ 
+
+8. 현재의 카톡 내게쓰기 노드의 [Execute step] 버튼을 누르고 폰에서 
+   아래 메시지가 도착했는지 확인하다
+   test reply
+   바로확인
+
+9. OpenWeatherMap 메시지 받기
+  카톡 내게쓰기 노드의 Parameters 안에서 아래 내용을 수정한다
+[변경전]
+{
+        "object_type": "text",
+        "text": "test reply",
+        "link": {
+            "web_url": "https://developers.kakao.com",
+            "mobile_web_url": "https://developers.kakao.com"
+        },
+        "button_title": "바로 확인"
+ }
+
+[변경후]
+{
+    "object_type": "text",
+    "text": "오늘 기온 : {{$json.today.temp}}℃\n내일 기온 : {{$json.tomorrow.temp}}℃",
+    "link": {
+        "web_url": "https://developers.kakao.com",
+        "mobile_web_url": "https://developers.kakao.com"
+    },
+    "button_title": "바로 확인"
+}
+
+----------------------------------------------------------------
+(버튼 없이 순수 텍스트만 보내는 방법은? :
+카카오톡에서는 '나에게 보내기 API'로는 지원되지 않는다.)
+
+
+
+
+
+
+
+
+   
+
+
