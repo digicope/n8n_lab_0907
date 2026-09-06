@@ -1,7 +1,7 @@
 ##  Develop Career : 생성형 AI 활용 마스터 과정 (n8n x AI 업무 자동화) 
 (2026.09.07 ~ 10.08 , 80Hr, 09월 23일 휴강)
 
-https://ict-is.cbist.or.kr/education/view.do?educationKey=433&searchActiveFlag=Y&searchCategory=ai&searchArea=%EC%B6%A9%EB%B6%81&currentPageNo=1&menuKey=79
+충청 ICT 이노베이션스퀘어 : https://ict-is.cbist.or.kr/education/view.do?educationKey=433&searchActiveFlag=Y&searchCategory=ai&searchArea=%EC%B6%A9%EB%B6%81&currentPageNo=1&menuKey=79
 <br>
 <br>
 
