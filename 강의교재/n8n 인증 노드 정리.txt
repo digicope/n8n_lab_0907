@@ -1,0 +1,7 @@
+# n8n 인증 노드 정리
+1. Google 제품 : Gmail, Google Sheet
+2. 날씨 : OpenWeatherMap
+3. 농수산물 가격 : KAMIS
+4. 카카오톡 나에게 보내기, 디스코드
+5. AI 서비스 : OpenAI,Gemini,Upstage(2개:Solar,Document)
+6. 공공데이터 포탈 API : 코스피 지수와 주식시세

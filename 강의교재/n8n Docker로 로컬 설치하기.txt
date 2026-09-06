@@ -1,0 +1,62 @@
+[n8n :  Docker로 로컬 설치하기]
+참조 : https://wikidocs.net/290888
+
+1.windows에서 Docker설치 
+https://docs.docker.com/desktop/setup/install/windows-install/
+에서 [Docker Desktop for Windows - x86_64] 을 클릭하여
+Docker Desktop Installer.exe 을 다운 받아 설치하고 윈도우 재 부팅한다
+
+2. Windows Powershell (32bit가 아닌 64bit용)을 실행하고 아래 명령을 입력하여 WSL을 설치한다(설치후 Linux용 하위 시스템 시작 화면이 나오면  창을 닫아 종료한다)
+wsl --install
+wsl --update
+
+3. Docker Desktop을 실행시키고 상단의 검색창에 n8n을 입력한다.
+n8nio/n8n 공식 이미지를 선택하고 [Pull]버튼을 누른다.(약간 다운로드 시간 소요)
+
+4.  다운로드가 완료되면, Docker Desktop 왼쪽 메뉴에서 Images 탭으로 이동한다.
+목록에서  Name n8nio/n8n 찾아 Actions의 Run 버튼을 클릭한다
+
+5. Run a new container 설정 창이 나오면 Optional settings 를 펼치고 아래 내용을 입력한다
+
+Container name: 컨테이너의 이름을  입력한다 (예: n8n).
+
+Ports: Host port에 5678을 입력한다
+
+Volumes: 
+Host path: 데이터를 저장할 내 컴퓨터의 폴더 경로를 지정한다 (예: n8n-data).
+Container path: /home/node/.n8n 을 입력한다
+
+Environment Variables: 컨테이너 실행 시 환경변수를 추가해 n8n의 동작을 세부적으로 설정할 수 있다. 예를 들어,
+GENERIC_TIMEZONE: 타임존 설정 (예: Asia/Seoul)
+
+6. 설정이 완료되면 Run 버튼을 클릭하여 컨테이너를 시작한다.
+
+7. 맨 아래에 나오는 주소 http://localhost:5678 를 클릭하여 n8n에 접속한다
+
+8. 웹브라우저의 Set up owner account 화면이 뜨면 계정 정보를 입력해준다
+Email: admin@test.com  
+First Name: Admin  (혹은 본인 이름)
+Last Name: User     (혹은 본인 성)
+Password: N8n12345 
+
+-- 이름 설정 예
+Email: 예) admin@test.com
+(아무 이메일이나 입력 가능,실제 메일 인증은 하지 않는다.)
+First Name : 예) Byounghwa
+Last Name : 예) Go
+Password : 예) N8n12345
+(본인이 사용할 로그인 비밀번호, 조건: 8자 이상, 숫자 1개 이상, 대문자 1개 이상)
+
+9. I want to receive security and product updates 는 언체크된 상태로 [Next]버튼을
+   클릭한다음 설문 화면에 [Get started]를 누른다.
+   Get paid features for free (forever) 에서 [skip] 버튼을 누른다
+   n8n이 잘 실행 되는지 확인한다
+
+10 . n8n 종료 방법 Docker Desktop 메뉴에서 실행중인 Container을 Actions의 
+     Stop(네모모양) 버튼을 클릭하면 종료된다
+
+11. n8n 종료후 다시 실행 할때는 Docker Desktop을 실행시키고
+    왼쪽 메뉴에서 [Containers]를 누르면 미리 생성해놓은 Container 목록이 
+   나타나는데 목록에서  Name n8nio/n8n 찾아 Actions의 Run 버튼을 클릭한다
+   Actions 버튼이 네모 모양으로 변경되면 옆의 Ports에 있는 "5678:5678"을 클릭하면
+   웹브라우저가 열리고 n8n을 실행해볼수있다

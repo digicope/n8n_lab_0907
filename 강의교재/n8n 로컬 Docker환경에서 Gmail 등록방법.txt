@@ -1,0 +1,36 @@
+[n8n 로컬 Docker환경에서 G메일을 보내기 위해 'Send Email' 노드를 설정하는 방법]
+
+1단계: Gmail 앱 비밀번호 발급 (필수)
+
+구글 계정 설정 -> 보안 -> 2단계 인증을 활성화합니다.
+
+2단계 인증을 클리하여 들어가서 페이지 최하단의 '앱 비밀번호(App Passwords)'로 이동합니다.
+앱 이름(예: n8n-local)을 입력하고 생성을 누릅니다.
+발급된 16자리 비밀번호를 따로 복사해 둡니다.
+
+(앱 비밀번호 메뉴가 안보일경우 아래 주소를 복사 사용)
+https://myaccount.google.com/apppasswords?utm_source=chatgpt.com&pli=1&rapt=AEjHL4OJCEfBHXzUCH9Yp_2WrmnLJyRHr3hfRiFpXRNH-DGk_dDkSSjYcaj2cx_m80zeNFlorGgvAnUCEB4QEQE8cTOlMH7sdDOHVfrEkm80ZcOC-naTkYo
+
+2단계: n8n 'Send an Email' 노드 설정
+n8n 워크플로우에서 Send an Email 노드를 추가합니다.
+Credential for SMTP 항목에서 Create New Credential을 선택합니다.
+
+다음과 같이 정보를 입력합니다.
+ User : 본인의 Gmail 주소 (예: user@gmail.com)
+ Password : 위에서 발급받은 16자리 앱 비밀번호
+ Host : smtp.gmail.com
+ Port : 465 또는 587 (465 권장)
+ SSL/TLS :  활성화 (Port 465일 때 필수)
+
+ Save로 저장하고 연결이 되면  상단에 "Connection tested successfully" 로 뜬다
+
+3. 노드 본문 매개변수 설정 (공통)
+자격 증명(Credential) 설정이 끝났다면 노드 본문 탭에서 아래 내용을 채워줍니다.
+
+From Email: 보내는 사람 이메일 (실제 메일 서버를 쓸 때는 인증된 본인 계정 주소와 일치해야 오류가 안 납니다.)
+
+To Email: 받는 사람 이메일
+
+Subject: 메일 제목
+
+Text / HTML: 메일 내용 (HTML을 선택하면 <b>내용</b> 처럼 서식을 넣을 수 있습니다.)
