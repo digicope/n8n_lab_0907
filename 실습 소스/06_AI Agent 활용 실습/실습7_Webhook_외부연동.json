@@ -1,0 +1,177 @@
+{
+  "name": "활용 실습7: Webhook 외부 연동 Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "agent-assistant",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-720, 0],
+      "id": "b8070001-0001-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "b8070001-webhook-agent-assistant"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.message }}",
+        "options": {
+          "systemMessage": "당신은 Webhook API용 업무 비서입니다.\n\n[도구 선택]\n- 날씨·기온 → OpenWeatherMap Tool (cityName)\n- 농산물 가격 → KAMIS (item_code, regday)\n- 카카오톡 전송 → 카카오톡 나에게 보내기 (message)\n- 계산 → Calculator\n- 시간 → Date & Time\n\n3문장 이내 한국어 존댓말로 답변하세요."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [-360, 0],
+      "id": "b8070002-0002-4000-8000-000000000002",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash",
+        "options": { "temperature": 0.3 }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [-560, 300],
+      "id": "b8070003-0003-4000-8000-000000000003",
+      "name": "Google Gemini Chat Model"
+    },
+    {
+      "parameters": {
+        "cityName": "={{ $fromAI('cityName', '도시명 (예: Seoul, 청주시)', 'string') }}",
+        "language": "kr"
+      },
+      "type": "n8n-nodes-base.openWeatherMapTool",
+      "typeVersion": 1,
+      "position": [-320, 300],
+      "id": "b8070004-0004-4000-8000-000000000004",
+      "name": "OpenWeatherMap Tool"
+    },
+    {
+      "parameters": {
+        "toolDescription": "KAMIS에서 농산물 소매 가격을 조회합니다. item_code는 부류코드(딸기:200, 고구마:100, 배추:212), regday는 조회일 YYYY-MM-DD입니다.",
+        "url": "https://www.kamis.or.kr/service/price/xml.do",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "action", "value": "dailyPriceByCategoryList" },
+            { "name": "p_productcls_code", "value": "01" },
+            {
+              "name": "p_item_category_code",
+              "value": "={{ $fromAI('item_code', '부류코드 (딸기:200, 고구마:100, 배추:212)', 'string') }}"
+            },
+            {
+              "name": "p_regday",
+              "value": "={{ $fromAI('regday', '조회일 YYYY-MM-DD', 'string') }}"
+            },
+            { "name": "p_convert_kg_yn", "value": "N" },
+            { "name": "p_cert_key", "value": "발급받은_KAMIS_cert_key" },
+            { "name": "p_cert_id", "value": "발급받은_KAMIS_cert_id" },
+            { "name": "p_returntype", "value": "json" }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [-80, 300],
+      "id": "b8070005-0005-4000-8000-000000000005",
+      "name": "KAMIS 농산물 가격"
+    },
+    {
+      "parameters": {
+        "toolDescription": "카카오톡 '나에게 보내기'로 텍스트 메시지를 전송합니다. message에 보낼 내용 전체를 입력하세요.",
+        "method": "POST",
+        "url": "https://kapi.kakao.com/v2/api/talk/memo/default/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded;charset=utf-8"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "template_object",
+              "value": "={{ JSON.stringify({ object_type: 'text', text: $fromAI('message', '카카오톡으로 보낼 메시지 내용', 'string'), link: { web_url: 'https://developers.kakao.com', mobile_web_url: 'https://developers.kakao.com' }, button_title: '바로 확인' }) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [160, 300],
+      "id": "b8070006-0006-4000-8000-000000000006",
+      "name": "카카오톡 나에게 보내기"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [400, 300],
+      "id": "b8070007-0007-4000-8000-000000000007",
+      "name": "Calculator"
+    },
+    {
+      "parameters": { "options": {} },
+      "type": "n8n-nodes-base.dateTimeTool",
+      "typeVersion": 2,
+      "position": [640, 300],
+      "id": "b8070008-0008-4000-8000-000000000008",
+      "name": "Date & Time"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"reply\": $json.output, \"timestamp\": $now.toISO() } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [-40, 0],
+      "id": "b8070009-0009-4000-8000-000000000009",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
+    },
+    "AI Agent": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "OpenWeatherMap Tool": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "KAMIS 농산물 가격": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "카카오톡 나에게 보내기": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Calculator": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Date & Time": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

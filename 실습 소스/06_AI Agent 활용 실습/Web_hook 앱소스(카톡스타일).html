@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Agent 카카오톡</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+            background-color: #abc1d1; /* 카카오톡 기본 배경색 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            height: 100dvh; /* 모바일 브라우저 주소창 높이 대응 */
+        }
+
+        .chat-app {
+            width: 100%;
+            max-width: 480px; /* 모바일/데스크톱 가로 폭 제한 */
+            height: 100%;
+            max-height: 900px;
+            background-color: #abc1d1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        /* 헤더 영역 */
+        .chat-header {
+            background-color: #abc1d1;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            z-index: 10;
+        }
+
+        .chat-header h1 {
+            font-size: 17px;
+            font-weight: 600;
+            color: #1e1e1e;
+        }
+
+        /* 채팅 메세지 출력 영역 */
+        .chat-body {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* 말풍선 공통 스타일 */
+        .message-row {
+            display: flex;
+            flex-direction: column;
+            max-width: 80%;
+        }
+
+        .message-bubble {
+            padding: 10px 14px;
+            font-size: 15px;
+            line-height: 1.4;
+            word-break: break-word;
+            white-space: pre-wrap;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 사용자 (보낸 메시지 - 우측 노란색) */
+        .message-row.user {
+            align-self: flex-end;
+            align-items: flex-end;
+        }
+
+        .message-row.user .message-bubble {
+            background-color: #fee500; /* 카카오톡 노란색 */
+            color: #000000;
+            border-radius: 15px 0px 15px 15px;
+        }
+
+        /* AI Agent (받은 메시지 - 좌측 흰색) */
+        .message-row.bot {
+            align-self: flex-start;
+            align-items: flex-start;
+        }
+
+        .message-row.bot .sender-name {
+            font-size: 12px;
+            color: #555555;
+            margin-bottom: 4px;
+            margin-left: 2px;
+        }
+
+        .message-row.bot .message-bubble {
+            background-color: #ffffff;
+            color: #000000;
+            border-radius: 0px 15px 15px 15px;
+        }
+
+        /* 하단 입력 영역 */
+        .chat-footer {
+            background-color: #ffffff;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chat-footer input {
+            flex: 1;
+            border: 1px solid #e0e0e0;
+            background-color: #f8f8f8;
+            padding: 10px 14px;
+            border-radius: 20px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .chat-footer input:focus {
+            background-color: #ffffff;
+            border-color: #cccccc;
+        }
+
+        .chat-footer button {
+            background-color: #fee500;
+            color: #000000;
+            border: none;
+            padding: 9px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .chat-footer button:disabled {
+            background-color: #e0e0e0;
+            color: #a0a0a0;
+            cursor: not-allowed;
+        }
+
+        /* 반응형 데스크톱 라운드 처리 */
+        @media (min-width: 481px) {
+            .chat-app {
+                height: 90vh;
+                border-radius: 16px;
+                overflow: hidden;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-app">
+    <!-- 헤더 -->
+    <div class="chat-header">
+        <h1>🤖 AI Agent</h1>
+    </div>
+
+    <!-- 채팅 기록 출력창 -->
+    <div class="chat-body" id="chatBody">
+        <!-- 기본 안내 메시지 -->
+        <div class="message-row bot">
+            <span class="sender-name">AI Agent</span>
+            <div class="message-bubble">안녕하세요! 무엇이든 물어보세요.</div>
+        </div>
+    </div>
+
+    <!-- 하단 입력창 -->
+    <div class="chat-footer">
+        <input 
+            type="text" 
+            id="userMessage" 
+            placeholder="메시지 입력" 
+            value="연봉 6,000만 원을 12로 나누면 월급이 얼마야?"
+            onkeypress="if(event.key === 'Enter') sendRequest()"
+        >
+        <button id="sendBtn" onclick="sendRequest()">전송</button>
+    </div>
+</div>
+
+<script>
+async function sendRequest() {
+    const inputElement = document.getElementById('userMessage');
+    const chatBody = document.getElementById('chatBody');
+    const sendBtn = document.getElementById('sendBtn');
+    
+    const message = inputElement.value.trim();
+    if (!message) return;
+
+    const webhookUrl = "https://digicope.app.n8n.cloud/webhook/agent-assistant";
+
+    // 1. 사용자 질문 메시지 말풍선 추가 (우측 노란색)
+    appendMessage('user', message);
+    inputElement.value = ''; // 입력창 초기화
+    
+    // 2. AI 로딩 메시지 말풍선 추가 (좌측 흰색)
+    const loadingBubble = appendMessage('bot', '답변을 작성하고 있습니다...', 'loading-msg');
+    
+    // 버튼 비활성화 & 스크롤 하단 이동
+    sendBtn.disabled = true;
+    scrollToBottom();
+
+    try {
+        const response = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message: message })
+        });
+
+        if (!response.ok) {
+            throw new Error(`서버 응답 오류: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        // 응답 데이터 텍스트 변환
+        let responseText = "";
+        if (typeof data === 'object') {
+            responseText = data.output || data.text || JSON.stringify(data, null, 2);
+        } else {
+            responseText = data;
+        }
+
+        // 로딩 말풍선 내용을 실제 답변으로 교체
+        loadingBubble.innerText = responseText;
+
+    } catch (error) {
+        loadingBubble.innerText = `오류가 발생했습니다: ${error.message}`;
+    } finally {
+        sendBtn.disabled = false;
+        scrollToBottom();
+    }
+}
+
+// 채팅 말풍선 HTML 추가 함수
+function appendMessage(sender, text, extraClass = '') {
+    const chatBody = document.getElementById('chatBody');
+    const rowDiv = document.createElement('div');
+    rowDiv.className = `message-row ${sender}`;
+
+    if (sender === 'bot') {
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'sender-name';
+        nameSpan.innerText = 'AI Agent';
+        rowDiv.appendChild(nameSpan);
+    }
+
+    const bubbleDiv = document.createElement('div');
+    bubbleDiv.className = `message-bubble ${extraClass}`;
+    bubbleDiv.innerText = text;
+
+    rowDiv.appendChild(bubbleDiv);
+    chatBody.appendChild(rowDiv);
+    
+    scrollToBottom();
+    return bubbleDiv; // 생성된 말풍선 엘리먼트 반환 (로딩 문구 교체용)
+}
+
+// 스크롤을 항상 최하단으로 이동하는 함수
+function scrollToBottom() {
+    const chatBody = document.getElementById('chatBody');
+    chatBody.scrollTop = chatBody.scrollHeight;
+}
+</script>
+
+</body>
+</html>

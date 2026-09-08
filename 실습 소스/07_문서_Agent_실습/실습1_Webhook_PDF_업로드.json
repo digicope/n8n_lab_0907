@@ -1,0 +1,74 @@
+{
+  "name": "Cloud 문서 Agent 실습1: Webhook PDF 업로드",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pdf-agent",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-640, 0],
+      "id": "c7010001-0001-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "c7010001-webhook-pdf-agent-001"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c7010002-0002-4000-8000-000000000001",
+              "name": "recipientEmail",
+              "value": "={{ $json.body.email }}",
+              "type": "string"
+            },
+            {
+              "id": "c7010002-0002-4000-8000-000000000002",
+              "name": "docTitle",
+              "value": "={{ $json.body.title || 'PDF 분석 리포트' }}",
+              "type": "string"
+            },
+            {
+              "id": "c7010002-0002-4000-8000-000000000003",
+              "name": "fileName",
+              "value": "={{ $binary.file.fileName }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-400, 0],
+      "id": "c7010002-0002-4000-8000-000000000002",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'received', email: $json.recipientEmail, title: $json.docTitle, file: $json.fileName } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [-160, 0],
+      "id": "c7010003-0003-4000-8000-000000000003",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Edit Fields", "type": "main", "index": 0 }]]
+    },
+    "Edit Fields": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

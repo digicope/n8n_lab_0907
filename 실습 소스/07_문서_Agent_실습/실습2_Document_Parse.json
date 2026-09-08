@@ -1,0 +1,133 @@
+{
+  "name": "Cloud 문서 Agent 실습2: Document Parse",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pdf-agent",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-1200, 0],
+      "id": "c7020001-0001-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "c7020001-webhook-pdf-agent-002"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c7020002-0002-4000-8000-000000000001",
+              "name": "recipientEmail",
+              "value": "={{ $json.body.email }}",
+              "type": "string"
+            },
+            {
+              "id": "c7020002-0002-4000-8000-000000000002",
+              "name": "docTitle",
+              "value": "={{ $json.body.title || 'PDF 분석 리포트' }}",
+              "type": "string"
+            },
+            {
+              "id": "c7020002-0002-4000-8000-000000000003",
+              "name": "fileName",
+              "value": "={{ $binary.file.fileName }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-960, 0],
+      "id": "c7020002-0002-4000-8000-000000000002",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.upstage.ai/v1/document-digitization",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "document-parse"
+            },
+            {
+              "name": "output_formats",
+              "value": "[\"markdown\"]"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "document",
+              "inputDataFieldName": "file"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-720, 0],
+      "id": "c7020003-0003-4000-8000-000000000003",
+      "name": "HTTP Request — Document Parse"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c7020003b-0003-4000-8000-000000000003",
+              "name": "markdown",
+              "value": "={{ $json.content.markdown }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-480, 0],
+      "id": "c7020003b-0003-4000-8000-000000000003b",
+      "name": "Extract Markdown"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'parsed', title: $('Edit Fields').item.json.docTitle, preview: ($json.markdown || '').substring(0, 200) + '...' } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [-240, 0],
+      "id": "c7020004-0004-4000-8000-000000000004",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Edit Fields", "type": "main", "index": 0 }]]
+    },
+    "Edit Fields": {
+      "main": [[{ "node": "HTTP Request — Document Parse", "type": "main", "index": 0 }]]
+    },
+    "HTTP Request — Document Parse": {
+      "main": [[{ "node": "Extract Markdown", "type": "main", "index": 0 }]]
+    },
+    "Extract Markdown": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

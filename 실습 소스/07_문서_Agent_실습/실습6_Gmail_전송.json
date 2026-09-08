@@ -1,0 +1,268 @@
+{
+  "name": "Cloud 문서 Agent 실습6: Gmail 전송",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pdf-agent",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-2000, 0],
+      "id": "c7060001-0001-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "c7060001-webhook-pdf-agent-006"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c7060002-0002-4000-8000-000000000001",
+              "name": "recipientEmail",
+              "value": "={{ $json.body.email }}",
+              "type": "string"
+            },
+            {
+              "id": "c7060002-0002-4000-8000-000000000002",
+              "name": "docTitle",
+              "value": "={{ $json.body.title || 'PDF 분석 리포트' }}",
+              "type": "string"
+            },
+            {
+              "id": "c7060002-0002-4000-8000-000000000003",
+              "name": "fileName",
+              "value": "={{ $binary.file.fileName }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-1760, 0],
+      "id": "c7060002-0002-4000-8000-000000000002",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.upstage.ai/v1/document-digitization",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "document-parse"
+            },
+            {
+              "name": "output_formats",
+              "value": "[\"markdown\"]"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "document",
+              "inputDataFieldName": "file"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-1520, 0],
+      "id": "c7060003-0003-4000-8000-000000000003",
+      "name": "HTTP Request — Document Parse"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c7060003b-0003-4000-8000-000000000003",
+              "name": "markdown",
+              "value": "={{ $json.content.markdown }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-1280, 0],
+      "id": "c7060003b-0003-4000-8000-000000000003b",
+      "name": "Extract Markdown"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "당신은 기업 문서 분석 전문가입니다.\n아래 Markdown 문서를 한국어로 분석하여 요약 리포트를 작성하세요.\n\n[문서 제목]\n{{ $('Edit Fields').item.json.docTitle }}\n\n[원문]\n{{ $('Extract Markdown').item.json.markdown }}\n\n아래 형식으로 작성하세요:\n\n## 한 줄 요약\n(1문장)\n\n## 핵심 내용\n- (불릿 3~5개)\n\n## 주요 키워드\n(쉼표로 구분)\n\n## 후속 조치 제안\n- (불릿 1~2개)",
+        "hasOutputParser": false
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [-1240, 0],
+      "id": "c7060004-0004-4000-8000-000000000004",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "solar-mini",
+        "options": {
+          "temperature": 0.3,
+          "maxTokens": 4096
+        }
+      },
+      "type": "n8n-nodes-upstage.lmChatModelUpstage",
+      "typeVersion": 1,
+      "position": [-1240, 200],
+      "id": "c7060005-0005-4000-8000-000000000005",
+      "name": "Upstage Solar Chat for Agent"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "document",
+        "operation": "create",
+        "driveId": {
+          "__rl": true,
+          "value": "myDrive",
+          "mode": "list",
+          "cachedResultName": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "default",
+          "mode": "list",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "title": "={{ $('Edit Fields').item.json.docTitle }}"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [-960, 0],
+      "id": "c7060006-0006-4000-8000-000000000006",
+      "name": "Google Docs"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "document",
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "simple": true,
+        "actionsUi": {
+          "actionFields": [
+            {
+              "object": "text",
+              "action": "insert",
+              "insertSegment": "body",
+              "locationChoice": "endOfSegmentLocation",
+              "text": "={{ $('Basic LLM Chain').item.json.text }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [-720, 0],
+      "id": "c7060007-0007-4000-8000-000000000007",
+      "name": "Google Docs1"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Google Docs').item.json.id }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "value": "myDrive",
+          "mode": "list",
+          "cachedResultName": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "YOUR_FOLDER_ID_HERE",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [-480, 0],
+      "id": "c7060008-0008-4000-8000-000000000008",
+      "name": "Google Drive"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Edit Fields').item.json.recipientEmail }}",
+        "subject": "=[n8n Agent] {{ $('Edit Fields').item.json.docTitle }} 분석 완료",
+        "emailType": "text",
+        "message": "=안녕하세요,\n\n요청하신 PDF 문서 분석이 완료되었습니다.\n\n📄 문서 제목: {{ $('Edit Fields').item.json.docTitle }}\n🔗 Google Docs: https://docs.google.com/document/d/{{ $('Google Docs').item.json.id }}/edit\n\n--- AI 요약 ---\n{{ $('Basic LLM Chain').item.json.text }}\n\n---\n본 메일은 n8n 문서 Agent 워크플로우에서 자동 발송되었습니다.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [-240, 0],
+      "id": "c7060009-0009-4000-8000-000000000009",
+      "name": "Gmail"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'completed', email: $('Edit Fields').item.json.recipientEmail, documentUrl: 'https://docs.google.com/document/d/' + $('Google Docs').item.json.id + '/edit' } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [0, 0],
+      "id": "c7060010-0010-4000-8000-000000000010",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Edit Fields", "type": "main", "index": 0 }]]
+    },
+    "Edit Fields": {
+      "main": [[{ "node": "HTTP Request — Document Parse", "type": "main", "index": 0 }]]
+    },
+    "HTTP Request — Document Parse": {
+      "main": [[{ "node": "Extract Markdown", "type": "main", "index": 0 }]]
+    },
+    "Extract Markdown": {
+      "main": [[{ "node": "Basic LLM Chain", "type": "main", "index": 0 }]]
+    },
+    "Basic LLM Chain": {
+      "main": [[{ "node": "Google Docs", "type": "main", "index": 0 }]]
+    },
+    "Google Docs": {
+      "main": [[{ "node": "Google Docs1", "type": "main", "index": 0 }]]
+    },
+    "Google Docs1": {
+      "main": [[{ "node": "Google Drive", "type": "main", "index": 0 }]]
+    },
+    "Google Drive": {
+      "main": [[{ "node": "Gmail", "type": "main", "index": 0 }]]
+    },
+    "Gmail": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    },
+    "Upstage Solar Chat for Agent": {
+      "ai_languageModel": [[{ "node": "Basic LLM Chain", "type": "ai_languageModel", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

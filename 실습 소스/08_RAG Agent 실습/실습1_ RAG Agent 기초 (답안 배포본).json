@@ -1,0 +1,425 @@
+{
+  "name": "실습1: RAG Agent 기초 (답안 완성본)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "512ae99b-53b3-473f-8347-d17690d7d5b3",
+      "name": "When clicking Execute workflow",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        864,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1ecz7ywGGq2OZ9T15225yEl3okNvJmaIj",
+          "mode": "list",
+          "cachedResultName": "sample.pdf",
+          "cachedResultUrl": "https://drive.google.com/file/d/1ecz7ywGGq2OZ9T15225yEl3okNvJmaIj/view?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "id": "6f81b1ed-9417-4780-8871-e5969f9a4b6c",
+      "name": "Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1088,
+        16
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "",
+          "name": ""
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "rag_google_drive_docs",
+          "mode": "list",
+          "cachedResultName": "rag_google_drive_docs"
+        },
+        "options": {}
+      },
+      "id": "5e16f97e-4e7c-4622-9cae-005fbc227ca6",
+      "name": "Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1,
+      "position": [
+        1536,
+        16
+      ],
+      "credentials": {
+        "qdrantApi": {
+          "id": "",
+          "name": ""
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "status",
+              "name": "status",
+              "type": "string",
+              "value": "ingested"
+            },
+            {
+              "id": "message",
+              "name": "message",
+              "type": "string",
+              "value": "Google Drive 문서 임베딩/벡터 저장 완료"
+            },
+            {
+              "id": "collection",
+              "name": "collection",
+              "type": "string",
+              "value": "rag_google_drive_docs"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "377cac28-5a96-4db5-83e7-18f28afc3717",
+      "name": "Ingestion Result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1888,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "9cdd6ce2-c799-4c38-8c95-2fefeff51cf0",
+      "name": "Chat Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        864,
+        656
+      ],
+      "webhookId": "e55ff904-f55a-4451-9247-353508ac7326"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "너는 Google Drive 문서 기반 RAG 어시스턴트다. Vector Store Tool에서 찾은 문맥을 우선 활용하고, 근거가 없으면 모른다고 답한다."
+        }
+      },
+      "id": "b6e98ef7-69bc-4655-b44b-6f56f68dbab5",
+      "name": "AI Agent (Gemini Chatbot)",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        656
+      ]
+    },
+    {
+      "parameters": {
+        "name": "rag_search_tool",
+        "description": "Qdrant 벡터 스토어에서 관련 문서를 검색합니다.",
+        "topK": 5
+      },
+      "id": "724d9c29-7457-4237-a187-b4c737a53e24",
+      "name": "Vector Store Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1,
+      "position": [
+        1216,
+        880
+      ]
+    },
+    {
+      "parameters": {
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "rag_google_drive_docs",
+          "mode": "list",
+          "cachedResultName": "rag_google_drive_docs"
+        },
+        "options": {}
+      },
+      "id": "851ce7b0-22e3-49e7-b8c4-cd6c4156020c",
+      "name": "Vector Store Retrieve",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        1088
+      ],
+      "credentials": {
+        "qdrantApi": {
+          "id": "",
+          "name": ""
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        1680,
+        240
+      ],
+      "id": "cb16c55c-6171-46f1-8b29-c83578536563",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        1296
+      ],
+      "id": "da92d80c-cb95-45ef-8657-1dd7cddc7754",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": ""
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1552,
+        240
+      ],
+      "id": "a3f9008b-6feb-492b-88e0-1979b4fc340d",
+      "name": "Embeddings Google Gemini1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": ""
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1408,
+        1088
+      ],
+      "id": "101a4218-0fcf-4a9c-b914-7f62a68bead7",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": ""
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "06391ae9-dfa7-426b-9324-d97e0222c900",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1088,
+        880
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": ""
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        1312,
+        16
+      ],
+      "id": "69f4be70-ac48-4be4-a2b0-dd07179e9ad3",
+      "name": "Extract from File"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking Execute workflow": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Ingestion Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent (Gemini Chatbot)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vector Store Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent (Gemini Chatbot)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vector Store Retrieve": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Vector Store Tool",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Vector Store Retrieve",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Vector Store Tool",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent (Gemini Chatbot)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "4ec7a176-b5e8-474c-ba42-d88ac9d3ad26",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f81cbf6508abd4938d9aad92bf319d7bc08d1cc64ee72bf3312d07ed48caa023"
+  },
+  "nodeGroups": [],
+  "id": "sB22V14mU9dYrlQ0",
+  "tags": []
+}

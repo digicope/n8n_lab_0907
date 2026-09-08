@@ -1,0 +1,165 @@
+{
+  "name": "Cloud 문서 Agent 실습3: Solar LLM 요약",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pdf-agent",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-1280, 0],
+      "id": "c7030001-0001-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "c7030001-webhook-pdf-agent-003"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c7030002-0002-4000-8000-000000000001",
+              "name": "recipientEmail",
+              "value": "={{ $json.body.email }}",
+              "type": "string"
+            },
+            {
+              "id": "c7030002-0002-4000-8000-000000000002",
+              "name": "docTitle",
+              "value": "={{ $json.body.title || 'PDF 분석 리포트' }}",
+              "type": "string"
+            },
+            {
+              "id": "c7030002-0002-4000-8000-000000000003",
+              "name": "fileName",
+              "value": "={{ $binary.file.fileName }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-1040, 0],
+      "id": "c7030002-0002-4000-8000-000000000002",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.upstage.ai/v1/document-digitization",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "document-parse"
+            },
+            {
+              "name": "output_formats",
+              "value": "[\"markdown\"]"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "document",
+              "inputDataFieldName": "file"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-800, 0],
+      "id": "c7030003-0003-4000-8000-000000000003",
+      "name": "HTTP Request — Document Parse"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c7030003b-0003-4000-8000-000000000003",
+              "name": "markdown",
+              "value": "={{ $json.content.markdown }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-560, 0],
+      "id": "c7030003b-0003-4000-8000-000000000003b",
+      "name": "Extract Markdown"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "당신은 기업 문서 분석 전문가입니다.\n아래 Markdown 문서를 한국어로 분석하여 요약 리포트를 작성하세요.\n\n[문서 제목]\n{{ $('Edit Fields').item.json.docTitle }}\n\n[원문]\n{{ $('Extract Markdown').item.json.markdown }}\n\n아래 형식으로 작성하세요:\n\n## 한 줄 요약\n(1문장)\n\n## 핵심 내용\n- (불릿 3~5개)\n\n## 주요 키워드\n(쉼표로 구분)\n\n## 후속 조치 제안\n- (불릿 1~2개)",
+        "hasOutputParser": false
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [-520, 0],
+      "id": "c7030004-0004-4000-8000-000000000004",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "solar-mini",
+        "options": {
+          "temperature": 0.3,
+          "maxTokens": 4096
+        }
+      },
+      "type": "n8n-nodes-upstage.lmChatModelUpstage",
+      "typeVersion": 1,
+      "position": [-520, 200],
+      "id": "c7030005-0005-4000-8000-000000000005",
+      "name": "Upstage Solar Chat for Agent"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'summarized', summary: $json.text } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [-240, 0],
+      "id": "c7030006-0006-4000-8000-000000000006",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Edit Fields", "type": "main", "index": 0 }]]
+    },
+    "Edit Fields": {
+      "main": [[{ "node": "HTTP Request — Document Parse", "type": "main", "index": 0 }]]
+    },
+    "HTTP Request — Document Parse": {
+      "main": [[{ "node": "Extract Markdown", "type": "main", "index": 0 }]]
+    },
+    "Extract Markdown": {
+      "main": [[{ "node": "Basic LLM Chain", "type": "main", "index": 0 }]]
+    },
+    "Basic LLM Chain": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    },
+    "Upstage Solar Chat for Agent": {
+      "ai_languageModel": [[{ "node": "Basic LLM Chain", "type": "ai_languageModel", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

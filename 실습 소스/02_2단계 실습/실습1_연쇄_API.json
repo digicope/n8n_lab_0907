@@ -1,0 +1,81 @@
+{
+  "name": "2단계 실습1: 연쇄 API",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-640, 0],
+      "id": "s2010001-0001-4000-8000-000000000001",
+      "name": "Manual Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://jsonplaceholder.typicode.com/posts/1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-400, 0],
+      "id": "s2010002-0002-4000-8000-000000000002",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "url": "=https://jsonplaceholder.typicode.com/users/{{ $('HTTP Request').item.json.userId }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-160, 0],
+      "id": "s2010003-0003-4000-8000-000000000003",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "s2010004-0004-4000-8000-000000000001",
+              "name": "postTitle",
+              "value": "={{ $('HTTP Request').item.json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "s2010004-0004-4000-8000-000000000002",
+              "name": "authorName",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "s2010004-0004-4000-8000-000000000003",
+              "name": "authorEmail",
+              "value": "={{ $json.email }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [80, 0],
+      "id": "s2010004-0004-4000-8000-000000000004",
+      "name": "Edit Fields"
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{ "node": "HTTP Request", "type": "main", "index": 0 }]]
+    },
+    "HTTP Request": {
+      "main": [[{ "node": "HTTP Request1", "type": "main", "index": 0 }]]
+    },
+    "HTTP Request1": {
+      "main": [[{ "node": "Edit Fields", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

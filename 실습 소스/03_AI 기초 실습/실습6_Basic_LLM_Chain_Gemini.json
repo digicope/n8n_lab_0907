@@ -1,0 +1,71 @@
+{
+  "name": "실습6: Basic LLM Chain + Gemini",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-720, 0],
+      "id": "e2060001-0001-4000-8000-000000000001",
+      "name": "Manual Trigger"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e2060002-0002-4000-8000-000000000001",
+              "name": "article",
+              "value": "n8n은 노코드 자동화 도구로, 다양한 앱과 API를 시각적으로 연결할 수 있습니다. 최근에는 OpenAI, Google Gemini 등 AI 모델을 워크플로우에 직접 연결하는 기능이 강화되었습니다.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-480, 0],
+      "id": "e2060002-0002-4000-8000-000000000002",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "아래 기사를 한국어로 3개의 불릿 포인트로 요약하세요.\n각 항목은 20자 이내로 작성하세요.\n\n기사:\n{{ $json.article }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [-200, 0],
+      "id": "e2060003-0003-4000-8000-000000000003",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [-200, 200],
+      "id": "e2060004-0004-4000-8000-000000000004",
+      "name": "Google Gemini Chat Model"
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{ "node": "Edit Fields", "type": "main", "index": 0 }]]
+    },
+    "Edit Fields": {
+      "main": [[{ "node": "Basic LLM Chain", "type": "main", "index": 0 }]]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [[{ "node": "Basic LLM Chain", "type": "ai_languageModel", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

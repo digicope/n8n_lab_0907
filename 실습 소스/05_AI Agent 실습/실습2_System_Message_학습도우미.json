@@ -1,0 +1,52 @@
+{
+  "name": "실습2: System Message 학습 도우미",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [-480, 0],
+      "id": "a7020001-0001-4000-8000-000000000001",
+      "name": "When chat message received",
+      "webhookId": "a7020001-webhook-4000-8000-000000000001"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "당신은 n8n과 AI 자동화를 가르치는 친절한 학습 도우미입니다.\n- 답변은 반드시 한국어로 작성하세요.\n- 초보자도 이해할 수 있게 3~5문장 이내로 설명하세요.\n- n8n 노드 이름은 Bold 없이 그대로 적으세요.\n- 모르는 내용은 추측하지 말고 모른다고 말하세요."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [-160, 0],
+      "id": "a7020002-0002-4000-8000-000000000002",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [-160, 220],
+      "id": "a7020003-0003-4000-8000-000000000003",
+      "name": "Google Gemini Chat Model"
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

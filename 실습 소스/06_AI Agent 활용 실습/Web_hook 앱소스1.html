@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agent 테스트</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .chat-container {
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #cccccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+        button {
+            padding: 12px 20px;
+            background-color: #ff6d5a; /* n8n 상징 색상 스타일 */
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #e05543;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .response-box {
+            background-color: #f1f3f5;
+            padding: 15px;
+            border-radius: 6px;
+            min-height: 80px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-size: 14px;
+            color: #333;
+        }
+        .loading {
+            color: #888;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <h2>🤖 AI Agent 질의하기</h2>
+    <div class="input-group">
+        <input 
+            type="text" 
+            id="userMessage" 
+            placeholder="질문을 입력하세요..." 
+            value="연봉 6,000만 원을 12로 나누면 월급이 얼마야?"
+            onkeypress="if(event.key === 'Enter') sendRequest()"
+        >
+        <button id="sendBtn" onclick="sendRequest()">전송</button>
+    </div>
+
+    <h3>응답 결과:</h3>
+    <div id="responseOutput" class="response-box">질문을 입력하고 전송 버튼을 눌러주세요.</div>
+</div>
+
+<script>
+async function sendRequest() {
+    const inputElement = document.getElementById('userMessage');
+    const outputElement = document.getElementById('responseOutput');
+    const sendBtn = document.getElementById('sendBtn');
+    
+    const message = inputElement.value.trim();
+    if (!message) {
+        alert('질문을 입력해주세요.');
+        return;
+    }
+
+    // WEBHOOK URL
+    const webhookUrl = "https://digicope.app.n8n.cloud/webhook/agent-assistant";
+
+    // UI 상태 변경 (로딩 중)
+    outputElement.innerText = "AI가 답변을 생성 중입니다...";
+    outputElement.classList.add('loading');
+    sendBtn.disabled = true;
+
+    try {
+        const response = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message: message })
+        });
+
+        if (!response.ok) {
+            throw new Error(`서버 응답 오류: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        // 응답 데이터 출력 (JSON 형태 혹은 텍스트 형태에 맞춰 출력)
+        if (typeof data === 'object') {
+            outputElement.innerText = JSON.stringify(data, null, 2);
+        } else {
+            outputElement.innerText = data;
+        }
+    } catch (error) {
+        outputElement.innerText = `오류가 발생했습니다: ${error.message}`;
+    } finally {
+        outputElement.classList.remove('loading');
+        sendBtn.disabled = false;
+    }
+}
+</script>
+
+</body>
+</html>

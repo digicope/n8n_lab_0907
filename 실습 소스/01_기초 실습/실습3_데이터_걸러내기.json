@@ -1,0 +1,72 @@
+{
+  "name": "실습3: 데이터 걸러내기",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-640, 0],
+      "id": "e1030001-0001-4000-8000-000000000001",
+      "name": "Manual Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://jsonplaceholder.typicode.com/posts",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-400, 0],
+      "id": "e1030002-0002-4000-8000-000000000002",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": { "maxItems": 3 },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [-160, 0],
+      "id": "e1030003-0003-4000-8000-000000000003",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1030004-0004-4000-8000-000000000001",
+              "name": "postId",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "e1030004-0004-4000-8000-000000000002",
+              "name": "title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [80, 0],
+      "id": "e1030004-0004-4000-8000-000000000004",
+      "name": "Edit Fields"
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{ "node": "HTTP Request", "type": "main", "index": 0 }]]
+    },
+    "HTTP Request": {
+      "main": [[{ "node": "Limit", "type": "main", "index": 0 }]]
+    },
+    "Limit": {
+      "main": [[{ "node": "Edit Fields", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

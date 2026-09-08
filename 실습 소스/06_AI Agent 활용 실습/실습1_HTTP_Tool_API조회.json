@@ -1,0 +1,133 @@
+{
+  "name": "활용 실습1: OpenWeatherMap·KAMIS·카카오톡 API Agent",
+  "nodes": [
+    {
+      "parameters": { "options": {} },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [-640, 0],
+      "id": "b8010001-0001-4000-8000-000000000001",
+      "name": "When chat message received",
+      "webhookId": "b8010001-webhook-4000-8000-000000000001"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "당신은 한국어 생활 정보 Agent입니다.\n\n[도구 선택]\n- 날씨·기온 질문 → OpenWeatherMap Tool (cityName 필요)\n- 농산물·채소·과일 가격 → KAMIS 농산물 가격 (item_code, regday 필요)\n  ※ \"어제\", \"최근\"이면 regday를 YYYY-MM-DD로 계산해 전달\n- 카카오톡 전송 요청 → 카카오톡 나에게 보내기 (message 필요)\n\n[규칙]\n- API 도구 없이 추측하지 마세요.\n- 응답은 한국어 존댓말, 3~5문장"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [-240, 0],
+      "id": "b8010002-0002-4000-8000-000000000002",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash",
+        "options": { "temperature": 0.2 }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [-480, 320],
+      "id": "b8010003-0003-4000-8000-000000000003",
+      "name": "Google Gemini Chat Model"
+    },
+    {
+      "parameters": {
+        "cityName": "={{ $fromAI('cityName', '도시명 (예: Seoul, 청주시)', 'string') }}",
+        "language": "kr"
+      },
+      "type": "n8n-nodes-base.openWeatherMapTool",
+      "typeVersion": 1,
+      "position": [-160, 320],
+      "id": "b8010004-0004-4000-8000-000000000004",
+      "name": "OpenWeatherMap Tool"
+    },
+    {
+      "parameters": {
+        "toolDescription": "KAMIS에서 농산물 소매 가격을 조회합니다. item_code는 부류코드(딸기:200, 고구마:100, 배추:212), regday는 조회일 YYYY-MM-DD입니다.",
+        "url": "https://www.kamis.or.kr/service/price/xml.do",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "action", "value": "dailyPriceByCategoryList" },
+            { "name": "p_productcls_code", "value": "01" },
+            {
+              "name": "p_item_category_code",
+              "value": "={{ $fromAI('item_code', '부류코드 (딸기:200, 고구마:100, 배추:212)', 'string') }}"
+            },
+            {
+              "name": "p_regday",
+              "value": "={{ $fromAI('regday', '조회일 YYYY-MM-DD', 'string') }}"
+            },
+            { "name": "p_convert_kg_yn", "value": "N" },
+            { "name": "p_cert_key", "value": "발급받은_KAMIS_cert_key" },
+            { "name": "p_cert_id", "value": "발급받은_KAMIS_cert_id" },
+            { "name": "p_returntype", "value": "json" }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [120, 320],
+      "id": "b8010005-0005-4000-8000-000000000005",
+      "name": "KAMIS 농산물 가격"
+    },
+    {
+      "parameters": {
+        "toolDescription": "카카오톡 '나에게 보내기'로 텍스트 메시지를 전송합니다. message에 보낼 내용 전체를 입력하세요.",
+        "method": "POST",
+        "url": "https://kapi.kakao.com/v2/api/talk/memo/default/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded;charset=utf-8"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "template_object",
+              "value": "={{ JSON.stringify({ object_type: 'text', text: $fromAI('message', '카카오톡으로 보낼 메시지 내용', 'string'), link: { web_url: 'https://developers.kakao.com', mobile_web_url: 'https://developers.kakao.com' }, button_title: '바로 확인' }) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [400, 320],
+      "id": "b8010006-0006-4000-8000-000000000006",
+      "name": "카카오톡 나에게 보내기"
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "OpenWeatherMap Tool": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "KAMIS 농산물 가격": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "카카오톡 나에게 보내기": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

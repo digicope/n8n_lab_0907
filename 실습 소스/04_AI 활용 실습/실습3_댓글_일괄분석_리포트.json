@@ -1,0 +1,100 @@
+{
+  "name": "활용 실습3: 댓글 일괄 AI 분석 리포트",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-1200, 0],
+      "id": "a3030001-0001-4000-8000-000000000001",
+      "name": "Manual Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://jsonplaceholder.typicode.com/comments?postId=1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-960, 0],
+      "id": "a3030002-0002-4000-8000-000000000002",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": { "maxItems": 3 },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [-720, 0],
+      "id": "a3030003-0003-4000-8000-000000000003",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "다음 댓글의 감정을 한 단어로만 답하세요 (positive, negative, neutral 중 하나).\n\n댓글 작성자: {{ $json.name }}\n댓글 내용: {{ $json.body }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [-440, 0],
+      "id": "a3030004-0004-4000-8000-000000000004",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [-440, 200],
+      "id": "a3030005-0005-4000-8000-000000000005",
+      "name": "Google Gemini Chat Model"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [-160, 0],
+      "id": "a3030006-0006-4000-8000-000000000006",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.first().json.data;\nconst lines = items.map((item, i) => {\n  const sentiment = (item.text || '').trim().toLowerCase();\n  const name = $('Limit').all()[i].json.name;\n  return `${i + 1}. ${name}: ${sentiment}`;\n});\n\nreturn [{\n  json: {\n    report: `📝 댓글 감정 분석 리포트 (postId=1)\\n\\n${lines.join('\\n')}`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [80, 0],
+      "id": "a3030007-0007-4000-8000-000000000007",
+      "name": "Code"
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{ "node": "HTTP Request", "type": "main", "index": 0 }]]
+    },
+    "HTTP Request": {
+      "main": [[{ "node": "Limit", "type": "main", "index": 0 }]]
+    },
+    "Limit": {
+      "main": [[{ "node": "Basic LLM Chain", "type": "main", "index": 0 }]]
+    },
+    "Basic LLM Chain": {
+      "main": [[{ "node": "Aggregate", "type": "main", "index": 0 }]]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [[{ "node": "Basic LLM Chain", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "Aggregate": {
+      "main": [[{ "node": "Code", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

@@ -1,0 +1,213 @@
+{
+  "name": "활용 실습8: 종합 고객지원 Agent",
+  "nodes": [
+    {
+      "parameters": { "options": {} },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [-800, 0],
+      "id": "b8080001-0001-4000-8000-000000000001",
+      "name": "When chat message received",
+      "webhookId": "b8080001-webhook-4000-8000-000000000001"
+    },
+    {
+      "parameters": {
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "당신은 전자상거래 고객지원 Agent입니다.\n\n[도구 매핑]\n- 주문 조회 (ORD-xxxx) → OrderStatus\n- 상품/회사 정보 → Wikipedia\n- 날씨·기온 → OpenWeatherMap Tool (cityName)\n- 농산물·식재료 가격 → KAMIS (item_code, regday)\n- 카카오톡 알림 전송 → 카카오톡 나에게 보내기 (message)\n- 금액 계산 → Calculator\n- 현재 시각 → Date & Time\n\n[응답]\n- 반드시 지정 JSON 형식으로 응답\n- answer 필드는 고객에게 보낼 한국어 메시지\n- tools_used에 실제 사용한 도구명 배열 기록",
+          "maxIterations": 15
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [-320, 0],
+      "id": "b8080002-0002-4000-8000-000000000002",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash",
+        "options": { "temperature": 0.2 }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [-720, 340],
+      "id": "b8080003-0003-4000-8000-000000000003",
+      "name": "Google Gemini Chat Model"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.sessionId }}",
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [-480, 340],
+      "id": "b8080004-0004-4000-8000-000000000004",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "cityName": "={{ $fromAI('cityName', '도시명 (예: Seoul, 청주시)', 'string') }}",
+        "language": "kr"
+      },
+      "type": "n8n-nodes-base.openWeatherMapTool",
+      "typeVersion": 1,
+      "position": [-240, 340],
+      "id": "b8080005-0005-4000-8000-000000000005",
+      "name": "OpenWeatherMap Tool"
+    },
+    {
+      "parameters": {
+        "toolDescription": "KAMIS에서 농산물 소매 가격을 조회합니다. item_code는 부류코드(딸기:200, 고구마:100, 배추:212), regday는 조회일 YYYY-MM-DD입니다.",
+        "url": "https://www.kamis.or.kr/service/price/xml.do",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "action", "value": "dailyPriceByCategoryList" },
+            { "name": "p_productcls_code", "value": "01" },
+            {
+              "name": "p_item_category_code",
+              "value": "={{ $fromAI('item_code', '부류코드 (딸기:200, 고구마:100, 배추:212)', 'string') }}"
+            },
+            {
+              "name": "p_regday",
+              "value": "={{ $fromAI('regday', '조회일 YYYY-MM-DD', 'string') }}"
+            },
+            { "name": "p_convert_kg_yn", "value": "N" },
+            { "name": "p_cert_key", "value": "발급받은_KAMIS_cert_key" },
+            { "name": "p_cert_id", "value": "발급받은_KAMIS_cert_id" },
+            { "name": "p_returntype", "value": "json" }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [0, 340],
+      "id": "b8080006-0006-4000-8000-000000000006",
+      "name": "KAMIS 농산물 가격"
+    },
+    {
+      "parameters": {
+        "toolDescription": "카카오톡 '나에게 보내기'로 텍스트 메시지를 전송합니다. message에 보낼 내용 전체를 입력하세요.",
+        "method": "POST",
+        "url": "https://kapi.kakao.com/v2/api/talk/memo/default/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded;charset=utf-8"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "template_object",
+              "value": "={{ JSON.stringify({ object_type: 'text', text: $fromAI('message', '카카오톡으로 보낼 메시지 내용', 'string'), link: { web_url: 'https://developers.kakao.com', mobile_web_url: 'https://developers.kakao.com' }, button_title: '바로 확인' }) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [240, 340],
+      "id": "b8080007-0007-4000-8000-000000000007",
+      "name": "카카오톡 나에게 보내기"
+    },
+    {
+      "parameters": {
+        "name": "OrderStatus",
+        "description": "주문번호(ORD-1001~1003)를 입력받아 배송 상태를 조회합니다.",
+        "language": "javaScript",
+        "jsCode": "const orderId = String(query).trim().toUpperCase();\nconst statuses = {\n  'ORD-1001': '배송중 (송장: 1234567890)',\n  'ORD-1002': '배송완료',\n  'ORD-1003': '결제대기'\n};\nreturn statuses[orderId] || `주문번호 ${orderId}를 찾을 수 없습니다. ORD-1001~1003을 확인하세요.`;"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [480, 340],
+      "id": "b8080008-0008-4000-8000-000000000008",
+      "name": "OrderStatus"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolWikipedia",
+      "typeVersion": 1,
+      "position": [720, 340],
+      "id": "b8080009-0009-4000-8000-000000000009",
+      "name": "Wikipedia"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [960, 340],
+      "id": "b8080010-0010-4000-8000-000000000010",
+      "name": "Calculator"
+    },
+    {
+      "parameters": { "options": {} },
+      "type": "n8n-nodes-base.dateTimeTool",
+      "typeVersion": 2,
+      "position": [1200, 340],
+      "id": "b8080011-0011-4000-8000-000000000011",
+      "name": "Date & Time"
+    },
+    {
+      "parameters": {
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{\n\t\"intent\": \"order_inquiry\",\n\t\"answer\": \"고객에게 전달할 한국어 답변\",\n\t\"tools_used\": [\"OrderStatus\"],\n\t\"confidence\": 0.95\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [-40, 340],
+      "id": "b8080012-0012-4000-8000-000000000012",
+      "name": "Structured Output Parser"
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "Simple Memory": {
+      "ai_memory": [[{ "node": "AI Agent", "type": "ai_memory", "index": 0 }]]
+    },
+    "OpenWeatherMap Tool": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "KAMIS 농산물 가격": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "카카오톡 나에게 보내기": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "OrderStatus": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Wikipedia": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Calculator": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Date & Time": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [[{ "node": "AI Agent", "type": "ai_outputParser", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

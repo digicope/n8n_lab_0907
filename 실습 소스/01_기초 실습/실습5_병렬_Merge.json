@@ -1,0 +1,133 @@
+{
+  "name": "실습5: 병렬 Merge",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-880, 0],
+      "id": "e1050001-0001-4000-8000-000000000001",
+      "name": "Manual Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://jsonplaceholder.typicode.com/users/1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-640, -80],
+      "id": "e1050002-0002-4000-8000-000000000002",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1050003-0003-4000-8000-000000000001",
+              "name": "user1",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-400, -80],
+      "id": "e1050003-0003-4000-8000-000000000003",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "url": "https://jsonplaceholder.typicode.com/users/2",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-640, 80],
+      "id": "e1050004-0004-4000-8000-000000000004",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1050005-0005-4000-8000-000000000001",
+              "name": "user2",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-400, 80],
+      "id": "e1050005-0005-4000-8000-000000000005",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [-160, 0],
+      "id": "e1050006-0006-4000-8000-000000000006",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1050007-0007-4000-8000-000000000001",
+              "name": "summary",
+              "value": "={{ $json.user1 + ' & ' + $json.user2 }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [80, 0],
+      "id": "e1050007-0007-4000-8000-000000000007",
+      "name": "Edit Fields2"
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[
+        { "node": "HTTP Request", "type": "main", "index": 0 },
+        { "node": "HTTP Request1", "type": "main", "index": 0 }
+      ]]
+    },
+    "HTTP Request": {
+      "main": [[{ "node": "Edit Fields", "type": "main", "index": 0 }]]
+    },
+    "Edit Fields": {
+      "main": [[{ "node": "Merge", "type": "main", "index": 0 }]]
+    },
+    "HTTP Request1": {
+      "main": [[{ "node": "Edit Fields1", "type": "main", "index": 0 }]]
+    },
+    "Edit Fields1": {
+      "main": [[{ "node": "Merge", "type": "main", "index": 1 }]]
+    },
+    "Merge": {
+      "main": [[{ "node": "Edit Fields2", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}
