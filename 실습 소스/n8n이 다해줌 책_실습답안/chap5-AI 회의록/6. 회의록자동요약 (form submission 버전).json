@@ -295,7 +295,7 @@
         "resource": "databasePage",
         "databaseId": {
           "__rl": true,
-          "value": "3e0ec875-c759-80d4-a651-f48ee88b60f7",
+          "value": "YOUR_NOTION_DATABASE_ID",
           "mode": "list",
           "cachedResultName": "회의록",
           "cachedResultUrl": "https://app.notion.com/p/3e0ec875c75980d4a651f48ee88b60f7"
