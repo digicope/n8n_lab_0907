@@ -41,6 +41,10 @@ https://www.kamis.or.kr/customer/reference/openapi_list.do
 https://developers.kakao.com/docs/ko/tutorial/start
 <br>
 
+#### Notion 개발자 모드 :
+https://app.notion.com/developers/connections
+<br>
+
 #### 공공데이터 포털 API 인증키 발급 사이트 :
 https://www.data.go.kr/index.do
 <br>
