@@ -1,11 +1,11 @@
 [Notion API 개인 액세스 토큰 발급 방법]
 
-1. Notion에 로그인한다.
+1. Notion에 로그인한다. 구글계정으로 회원 가입
+   https://app.notion.com/ko
 
-2. 개발자 도구로 이동한다.
+2. 개발자 도구로 이동한다. https://app.notion.com/developers
    현재 Notion 화면에서 상단에
-   [시작하기] [Worker] [연결] [개인 액세스 토큰]
-   메뉴가 표시된다.
+   [시작하기] [Worker] [연결] [개인 액세스 토큰]   메뉴가 표시된다.
 
 3. [개인 액세스 토큰]을 클릭한다.
 
