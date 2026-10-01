@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>n8n Agent Assistant Tester</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        },
+                        n8n: '#ff6d5a'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Marked.js for Markdown Rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.5); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.5); border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.8); }
+        
+        /* Markdown Content Styling */
+        .markdown-body { color: #e2e8f0; line-height: 1.6; }
+        .markdown-body h1 { font-size: 1.5rem; font-weight: 700; margin-top: 1rem; margin-bottom: 0.5rem; color: #f8fafc; }
+        .markdown-body h2 { font-size: 1.25rem; font-weight: 600; margin-top: 0.875rem; margin-bottom: 0.5rem; color: #f1f5f9; }
+        .markdown-body h3 { font-size: 1.1rem; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.5rem; color: #e2e8f0; }
+        .markdown-body p { margin-bottom: 0.75rem; }
+        .markdown-body ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.75rem; }
+        .markdown-body ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 0.75rem; }
+        .markdown-body code { background: rgba(15, 23, 42, 0.6); padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-size: 0.875em; border: 1px solid rgba(255,255,255,0.1); }
+        .markdown-body pre { background: #0f172a; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 0.75rem; border: 1px solid #334155; }
+        .markdown-body pre code { background: transparent; padding: 0; border: none; }
+        .markdown-body blockquote { border-left: 4px solid #38bdf8; padding-left: 1rem; color: #94a3b8; font-style: italic; margin-bottom: 0.75rem; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between">
+
+    <!-- Header -->
+    <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
+                    <i class="fa-solid me-0 fa-bolt text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">n8n Agent Assistant Tester</h1>
+                    <p class="text-xs text-slate-400">REST API Webhook Interaction UI</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span id="connectionBadge" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-400 border border-slate-700">
+                    <span class="w-2 h-2 mr-1.5 rounded-full bg-slate-500"></span> 대기 중
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-6xl mx-auto w-full px-4 py-6 flex-grow grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Control Panel (Input & Config) -->
+        <section class="lg:col-span-5 flex flex-col gap-5">
+            
+            <!-- Endpoint Config Box -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                <div class="flex items-center justify-between mb-3">
+                    <label class="text-sm font-semibold text-slate-300 flex items-center gap-2">
+                        <i class="fa-solid fa-link text-brand-500"></i> 엔드포인트 URL
+                    </label>
+                    <button id="resetUrlBtn" class="text-xs text-slate-400 hover:text-white transition-colors flex items-center gap-1">
+                        <i class="fa-solid fa-rotate-left"></i> 초기화
+                    </button>
+                </div>
+                <div class="relative">
+                    <input type="url" id="webhookUrl" 
+                           class="w-full bg-slate-950 border border-slate-700 focus:border-brand-500 text-slate-200 text-sm rounded-xl px-3.5 py-2.5 pl-9 focus:outline-none focus:ring-1 focus:ring-brand-500 font-mono transition-all"
+                           value="https://digicope.app.n8n.cloud/webhook/agent-assistant"
+                           placeholder="https://...">
+                    <i class="fa-solid fa-globe absolute left-3 top-3.5 text-xs text-slate-500"></i>
+                </div>
+                <p class="text-xs text-slate-500 mt-2 flex items-center gap-1">
+                    <i class="fa-solid fa-circle-info"></i> n8n 테스트용 웹훅은 실행 모드 상태여야 동작합니다.
+                </p>
+            </div>
+
+            <!-- Message Input Form -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex-grow flex flex-col">
+                <div class="flex items-center justify-between mb-3">
+                    <label for="messageInput" class="text-sm font-semibold text-slate-300 flex items-center gap-2">
+                        <i class="fa-solid fa-paper-plane text-brand-500"></i> 메시지 (Request Body)
+                    </label>
+                    <span class="text-xs text-slate-500 font-mono">POST (JSON)</span>
+                </div>
+
+                <div class="flex-grow flex flex-col relative mb-4">
+                    <textarea id="messageInput" 
+                              rows="6" 
+                              class="w-full h-full bg-slate-950 border border-slate-700 focus:border-brand-500 text-slate-200 text-sm rounded-xl p-3.5 focus:outline-none focus:ring-1 focus:ring-brand-500 resize-none custom-scrollbar transition-all"
+                              placeholder="보낼 메시지를 입력하세요... (예: 서울시 지금 날씨와 기온 알려줘.)">서울시 지금 날씨와 기온 알려줘.</textarea>
+                </div>
+
+                <!-- Quick Prompts Preset -->
+                <div class="mb-4">
+                    <p class="text-xs font-medium text-slate-400 mb-2">프롬프트 샘플:</p>
+                    <div class="flex flex-wrap gap-1.5">
+                        <button type="button" onclick="setPrompt('서울시 지금 날씨와 기온 알려줘.')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700/60 transition">
+                            🌤️ 날씨
+                        </button>
+                        <button type="button" onclick="setPrompt('안녕하세요! 간단하게 자기소개해 주세요.')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700/60 transition">
+                            👋 인사
+                        </button>
+                        <button type="button" onclick="setPrompt('오늘 업무 생산성을 높이는 3가지 팁을 알려줘.')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700/60 transition">
+                            💡 팁 요청
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button id="sendBtn" 
+                        class="w-full bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-600 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-brand-500/25 active:scale-[0.99] transition-all flex items-center justify-center space-x-2">
+                    <i id="sendIcon" class="fa-solid fa-paper-plane"></i>
+                    <span id="sendBtnText">메시지 전송</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Right Response View Panel -->
+        <section class="lg:col-span-7 flex flex-col">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl flex-grow flex flex-col overflow-hidden min-h-[450px]">
+                
+                <!-- Response Header Tabs & Actions -->
+                <div class="border-b border-slate-800 px-5 py-3 flex items-center justify-between bg-slate-900/80">
+                    <div class="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                        <button id="tabRendered" class="px-3 py-1.5 text-xs font-medium rounded-lg text-white bg-slate-800 shadow transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-align-left text-brand-500"></i> 응답 보기 (Formatted)
+                        </button>
+                        <button id="tabRaw" class="px-3 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-slate-200 transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-code"></i> 원본 JSON (Raw)
+                        </button>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <!-- Copy Button -->
+                        <button id="copyBtn" disabled class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition" title="응답 복사">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Response Status Bar -->
+                <div id="statusSection" class="hidden px-5 py-2.5 bg-slate-950/60 border-b border-slate-800 text-xs flex items-center justify-between font-mono">
+                    <div class="flex items-center space-x-3">
+                        <span id="statusCodeBadge" class="px-2 py-0.5 rounded font-bold">200 OK</span>
+                        <span id="responseTime" class="text-slate-400"><i class="fa-regular fa-clock mr-1"></i> 0ms</span>
+                    </div>
+                    <div id="responseSize" class="text-slate-500">0 B</div>
+                </div>
+
+                <!-- Main Response Content Area -->
+                <div class="p-6 flex-grow overflow-y-auto custom-scrollbar relative flex flex-col">
+                    
+                    <!-- Empty State -->
+                    <div id="emptyState" class="my-auto flex flex-col items-center justify-center text-center py-12">
+                        <div class="w-16 h-16 rounded-full bg-slate-800/80 border border-slate-700/50 flex items-center justify-center text-slate-500 mb-4">
+                            <i class="fa-solid fa-terminal text-2xl"></i>
+                        </div>
+                        <h3 class="text-slate-300 font-medium mb-1">메시지를 보낼 준비가 되었습니다</h3>
+                        <p class="text-xs text-slate-500 max-w-sm">좌측 입력창에서 메시지를 작성한 후 '메시지 전송' 버튼을 누르면 n8n 응답이 이곳에 출력됩니다.</p>
+                    </div>
+
+                    <!-- Loading Spinner State -->
+                    <div id="loadingState" class="hidden my-auto flex flex-col items-center justify-center text-center py-12">
+                        <div class="relative w-12 h-12 mb-4">
+                            <div class="absolute inset-0 border-4 border-brand-500/20 rounded-full"></div>
+                            <div class="absolute inset-0 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                        <h3 class="text-slate-200 font-medium mb-1">n8n 에이전트 응답 기다리는 중...</h3>
+                        <p class="text-xs text-slate-500">웹훅 연동 작업을 처리하고 있습니다.</p>
+                    </div>
+
+                    <!-- Error Alert View -->
+                    <div id="errorBox" class="hidden p-4 bg-red-950/30 border border-red-800/50 rounded-xl mb-4 text-xs">
+                        <div class="flex items-start gap-3">
+                            <i class="fa-solid fa-triangle-exclamation text-red-400 text-lg mt-0.5"></i>
+                            <div class="flex-grow">
+                                <h4 class="font-bold text-red-300 text-sm mb-1" id="errorTitle">요청 실패</h4>
+                                <p class="text-red-200/80 leading-relaxed" id="errorMessage">서버와의 통신 도중 오류가 발생했습니다.</p>
+                                
+                                <div id="corsTip" class="mt-3 p-2.5 bg-red-900/20 border border-red-800/30 rounded-lg text-slate-300">
+                                    <p class="font-semibold text-red-300 mb-1">💡 자주 발생하는 원인:</p>
+                                    <ul class="list-disc pl-4 space-y-1 text-slate-300">
+                                        <li><strong>n8n 테스트 모드 미실행:</strong> n8n 에디터에서 'Test step' 또는 'Listen for test event' 상태인지 확인하세요.</li>
+                                        <li><strong>CORS 브라우저 제한:</strong> 브라우저가 교차 출처 요청(CORS)을 차단했을 수 있습니다. 헤더에 `Access-Control-Allow-Origin` 설정이 되어있는지 체크하세요.</li>
+                                        <li><strong>잘못된 URL:</strong> 엔드포인트 URL이 올바른지 확인해 주세요.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rendered Text Output View -->
+                    <div id="renderedView" class="hidden flex-grow">
+                        <div id="markdownOutput" class="markdown-body"></div>
+                    </div>
+
+                    <!-- Raw JSON Output View -->
+                    <div id="rawView" class="hidden flex-grow">
+                        <pre id="jsonOutput" class="bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-xs text-emerald-400 overflow-x-auto custom-scrollbar h-full min-h-[300px]"></pre>
+                    </div>
+
+                </div>
+
+                <!-- Response Footer Info -->
+                <div class="border-t border-slate-800 px-5 py-2.5 bg-slate-950/40 text-[11px] text-slate-500 flex justify-between items-center">
+                    <span>Target Key: <code class="text-slate-400">respond</code> / <code class="text-slate-400">output</code> / <code class="text-slate-400">text</code></span>
+                    <span>Content-Type: <code class="text-slate-400">application/json</code></span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/60 py-4 bg-slate-950">
+        <div class="max-w-6xl mx-auto px-4 text-center text-xs text-slate-500">
+            n8n Webhook Client &bull; Built for HTTP POST Testing
+        </div>
+    </footer>
+
+    <!-- Notification Toast Message -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 text-slate-100 border border-slate-700 px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transform translate-y-20 opacity-0 transition-all duration-300 z-50 pointer-events-none">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toastMessage" class="text-sm font-medium">메시지가 복사되었습니다.</span>
+    </div>
+
+    <script>
+        // DOM Elements
+        const webhookUrlInput = document.getElementById('webhookUrl');
+        const resetUrlBtn = document.getElementById('resetUrlBtn');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const sendBtnText = document.getElementById('sendBtnText');
+        const sendIcon = document.getElementById('sendIcon');
+        
+        const tabRendered = document.getElementById('tabRendered');
+        const tabRaw = document.getElementById('tabRaw');
+        const copyBtn = document.getElementById('copyBtn');
+
+        const statusSection = document.getElementById('statusSection');
+        const statusCodeBadge = document.getElementById('statusCodeBadge');
+        const responseTime = document.getElementById('responseTime');
+        const responseSize = document.getElementById('responseSize');
+        const connectionBadge = document.getElementById('connectionBadge');
+
+        const emptyState = document.getElementById('emptyState');
+        const loadingState = document.getElementById('loadingState');
+        const errorBox = document.getElementById('errorBox');
+        const errorTitle = document.getElementById('errorTitle');
+        const errorMessage = document.getElementById('errorMessage');
+        const corsTip = document.getElementById('corsTip');
+
+        const renderedView = document.getElementById('renderedView');
+        const markdownOutput = document.getElementById('markdownOutput');
+        const rawView = document.getElementById('rawView');
+        const jsonOutput = document.getElementById('jsonOutput');
+
+        const DEFAULT_URL = "https://digicope.app.n8n.cloud/webhook/agent-assistant";
+        let activeTab = 'rendered'; // 'rendered' or 'raw'
+        let currentResponseData = null;
+        let currentResponseText = "";
+
+        // Reset URL Button
+        resetUrlBtn.addEventListener('click', () => {
+            webhookUrlInput.value = DEFAULT_URL;
+            showToast('엔드포인트 URL이 기본값으로 초기화되었습니다.');
+        });
+
+        // Set Preset Prompt
+        function setPrompt(text) {
+            messageInput.value = text;
+            messageInput.focus();
+        }
+
+        // Tab Switch Handlers
+        tabRendered.addEventListener('click', () => switchTab('rendered'));
+        tabRaw.addEventListener('click', () => switchTab('raw'));
+
+        function switchTab(tab) {
+            activeTab = tab;
+            if (tab === 'rendered') {
+                tabRendered.className = "px-3 py-1.5 text-xs font-medium rounded-lg text-white bg-slate-800 shadow transition-all flex items-center gap-1.5";
+                tabRaw.className = "px-3 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-slate-200 transition-all flex items-center gap-1.5";
+                
+                if (currentResponseData !== null) {
+                    renderedView.classList.remove('hidden');
+                    rawView.classList.add('hidden');
+                }
+            } else {
+                tabRaw.className = "px-3 py-1.5 text-xs font-medium rounded-lg text-white bg-slate-800 shadow transition-all flex items-center gap-1.5";
+                tabRendered.className = "px-3 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-slate-200 transition-all flex items-center gap-1.5";
+                
+                if (currentResponseData !== null) {
+                    rawView.classList.remove('hidden');
+                    renderedView.classList.add('hidden');
+                }
+            }
+        }
+
+        // Copy Response Handler
+        copyBtn.addEventListener('click', () => {
+            if (!currentResponseText) return;
+            
+            const copyContent = activeTab === 'raw' 
+                ? JSON.stringify(currentResponseData, null, 2) 
+                : currentResponseText;
+
+            // Use ExecCommand fallback if clipboard API is restricted
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(copyContent).then(() => {
+                    showToast('클립보드에 복사되었습니다!');
+                }).catch(() => fallbackCopy(copyContent));
+            } else {
+                fallbackCopy(copyContent);
+            }
+        });
+
+        function fallbackCopy(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast('클립보드에 복사되었습니다!');
+            } catch (err) {
+                showToast('복사에 실패했습니다.', 'error');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        // Send Webhook Request Handler
+        sendBtn.addEventListener('click', async () => {
+            const url = webhookUrlInput.value.trim();
+            const message = messageInput.value.trim();
+
+            if (!url) {
+                showToast('웹훅 URL을 입력해주세요.', 'error');
+                return;
+            }
+
+            if (!message) {
+                showToast('전송할 메시지를 입력해주세요.', 'error');
+                return;
+            }
+
+            // UI Loading State
+            setLoadingUI(true);
+            const startTime = performance.now();
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const endTime = performance.now();
+                const duration = Math.round(endTime - startTime);
+
+                const responseTextRaw = await response.text();
+                const byteSize = new Blob([responseTextRaw]).size;
+
+                let data = null;
+                try {
+                    data = JSON.parse(responseTextRaw);
+                } catch (e) {
+                    // Not valid JSON, store as text wrapper
+                    data = { responseText: responseTextRaw };
+                }
+
+                currentResponseData = data;
+
+                // Update Status UI
+                updateStatusBadge(response.status, response.statusText, duration, byteSize);
+
+                if (response.ok) {
+                    displayResponse(data);
+                } else {
+                    showError(
+                        `HTTP 오류 (${response.status})`, 
+                        `서버가 오류 상태 코드 [${response.status} ${response.statusText}]를 반환했습니다.`
+                    );
+                }
+
+            } catch (error) {
+                console.error('Fetch Error:', error);
+                const endTime = performance.now();
+                const duration = Math.round(endTime - startTime);
+                
+                updateStatusBadge(0, 'Failed', duration, 0);
+                
+                let errorMsg = error.message || '네트워크 요청에 실패했습니다.';
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    errorMsg = '서버에 연결할 수 없습니다. CORS 브라우저 차단 또는 n8n 웹훅 테스트 모드가 종료되었을 수 있습니다.';
+                }
+
+                showError('통신 네트워크 오류', errorMsg, true);
+            } finally {
+                setLoadingUI(false);
+            }
+        });
+
+        // Display Response Content
+        function displayResponse(data) {
+            emptyState.classList.add('hidden');
+            errorBox.classList.add('hidden');
+            copyBtn.disabled = false;
+
+            // Format Raw JSON
+            jsonOutput.textContent = JSON.stringify(data, null, 2);
+
+            // Extract main display text from respond/output/message field or raw string
+            let extractedText = "";
+
+            if (typeof data === 'string') {
+                extractedText = data;
+            } else if (data && typeof data === 'object') {
+                // Check common response keys from n8n / LLM agents
+                if (data.respond !== undefined) {
+                    extractedText = typeof data.respond === 'object' ? JSON.stringify(data.respond, null, 2) : String(data.respond);
+                } else if (data.output !== undefined) {
+                    extractedText = typeof data.output === 'object' ? JSON.stringify(data.output, null, 2) : String(data.output);
+                } else if (data.text !== undefined) {
+                    extractedText = typeof data.text === 'object' ? JSON.stringify(data.text, null, 2) : String(data.text);
+                } else if (data.message !== undefined && typeof data.message === 'string') {
+                    extractedText = data.message;
+                } else if (data.responseText !== undefined) {
+                    extractedText = data.responseText;
+                } else {
+                    // Fallback to pretty formatted json
+                    extractedText = "```json\n" + JSON.stringify(data, null, 2) + "\n```";
+                }
+            }
+
+            currentResponseText = extractedText;
+
+            // Render Markdown Output safely
+            if (window.marked) {
+                markdownOutput.innerHTML = marked.parse(extractedText);
+            } else {
+                markdownOutput.textContent = extractedText;
+            }
+
+            // Show current active tab
+            switchTab(activeTab);
+        }
+
+        // Show Error UI
+        function showError(title, msg, showCorsAdvice = false) {
+            emptyState.classList.add('hidden');
+            renderedView.classList.add('hidden');
+            rawView.classList.add('hidden');
+            
+            errorTitle.textContent = title;
+            errorMessage.textContent = msg;
+            
+            if (showCorsAdvice) {
+                corsTip.classList.remove('hidden');
+            } else {
+                corsTip.classList.add('hidden');
+            }
+
+            errorBox.classList.remove('hidden');
+            copyBtn.disabled = true;
+        }
+
+        // UI Loading Spinner Toggle
+        function setLoadingUI(isLoading) {
+            if (isLoading) {
+                sendBtn.disabled = true;
+                sendBtn.classList.add('opacity-75', 'cursor-not-allowed');
+                sendIcon.className = 'fa-solid fa-spinner animate-spin';
+                sendBtnText.textContent = '전송 중...';
+
+                emptyState.classList.add('hidden');
+                renderedView.classList.add('hidden');
+                rawView.classList.add('hidden');
+                errorBox.classList.add('hidden');
+                loadingState.classList.remove('hidden');
+
+                connectionBadge.innerHTML = `<span class="w-2 h-2 mr-1.5 rounded-full bg-amber-400 animate-ping"></span> 요청 전송 중`;
+                connectionBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20";
+            } else {
+                sendBtn.disabled = false;
+                sendBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+                sendIcon.className = 'fa-solid fa-paper-plane';
+                sendBtnText.textContent = '메시지 전송';
+                loadingState.classList.add('hidden');
+            }
+        }
+
+        // Update Status Info Bar
+        function updateStatusBadge(status, text, ms, bytes) {
+            statusSection.classList.remove('hidden');
+            responseTime.innerHTML = `<i class="fa-regular fa-clock mr-1"></i> ${ms}ms`;
+            responseSize.textContent = `${formatBytes(bytes)}`;
+
+            if (status >= 200 && status < 300) {
+                statusCodeBadge.textContent = `${status} ${text || 'OK'}`;
+                statusCodeBadge.className = 'px-2 py-0.5 rounded font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+                
+                connectionBadge.innerHTML = `<span class="w-2 h-2 mr-1.5 rounded-full bg-emerald-400"></span> 응답 완료`;
+                connectionBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+            } else {
+                statusCodeBadge.textContent = status ? `${status} ${text}` : 'Error';
+                statusCodeBadge.className = 'px-2 py-0.5 rounded font-bold bg-red-500/20 text-red-400 border border-red-500/30';
+                
+                connectionBadge.innerHTML = `<span class="w-2 h-2 mr-1.5 rounded-full bg-red-400"></span> 통신 에러`;
+                connectionBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20";
+            }
+        }
+
+        // Format Byte Sizes
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        // Toast Helper
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMessage.textContent = msg;
+
+            if (type === 'error') {
+                toastIcon.className = 'fa-solid fa-circle-exclamation text-red-400 text-lg';
+            } else {
+                toastIcon.className = 'fa-solid fa-circle-check text-emerald-400 text-lg';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
