@@ -57,6 +57,10 @@ https://www.data.go.kr/index.do
 https://www.data.go.kr/data/15094807/openapi.do
 <br>
 
+#### 금융위원회_주식시세정보 :
+https://www.data.go.kr/data/15094808/openapi.do
+<br>
+
 #### Qdrant Vector Store API 키 발급 사이트 :
 https://train.qdrant.dev/
 <br>
