@@ -45,7 +45,7 @@ json&mrktCls=KOSPI"
 
 ### 05
 ```
-{{ $(‘Merge’).all().map(i => i.json).find(s => s.종목명 === ‘코스피’) }}
+{{ $('Merge').all().map(i => i.json).find(s => s.종목명 === '코스피') }}
 ```
 
 ### 06
