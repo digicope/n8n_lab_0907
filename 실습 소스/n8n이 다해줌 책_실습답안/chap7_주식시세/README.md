@@ -50,7 +50,7 @@ json&mrktCls=KOSPI"
 
 ### 06
 ```
-{{ $(‘Merge’).all().map(i => i.json).filter(s => s.종목명 !== ‘코스피’) }}
+{{ $('Merge').all().map(i => i.json).filter(s => s.종목명 !== '코스피') }}
 ```
 
 ## 프롬프트
