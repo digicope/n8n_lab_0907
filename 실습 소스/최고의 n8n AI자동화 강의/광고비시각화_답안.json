@@ -1,0 +1,157 @@
+{
+  "name": "광고비시각화",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "200cb725-7eaf-4f3b-b0f8-491745cb9fa4",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "일간 매체별 광고비 더미 데이터",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "시트1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "691fa0f6-2130-4ba3-bc67-e4c151aa6fdb",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "labelsMode": "array",
+        "labelsArray": "={{['네이버', '카카오', '구글', '페이스북', '인스타그램']}}",
+        "data": "={{ [ \n$json['네이버'],\n$json['카카오'],\n$json['구글'],\n$json['페이스북'],\n$json['인스타그램']\n] }}",
+        "chartOptions": {
+          "format": "png",
+          "horizontal": true
+        },
+        "datasetOptions": {}
+      },
+      "type": "n8n-nodes-base.quickChart",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "5d13d45c-6e6b-4750-a933-ad62c3061030",
+      "name": "QuickChart"
+    },
+    {
+      "parameters": {
+        "sendTo": "your-email@example.com",
+        "subject": "=[n8nKorea] {{$now.format('yyyy-MM-dd')}} 일자 매체별 광고비를 발송 드립니다.",
+        "emailType": "text",
+        "message": "={{$now.format('yyyy-MM-dd')}} 일자 매체별 광고비 데이터 입니다.\n\n네이버 : {{ $('Google Sheets').item.json['네이버'] }} 원\n카카오 : {{ $('Google Sheets').item.json['카카오'] }} 원\n구글 : {{ $('Google Sheets').item.json['구글'] }} 원\n페이스북 : {{ $('Google Sheets').item.json['페이스북'] }} 원\n인스타그램 : {{ $('Google Sheets').item.json['인스타그램'] }} 원\n\n시각 자료는 첨부파일을 확인해주세요",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        672,
+        0
+      ],
+      "id": "29640652-7fe6-47dd-9d6e-f0cdfa23b2d0",
+      "name": "Gmail",
+      "webhookId": "e8bbc48f-36e9-46ac-8efd-fd363ccc7758",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "QuickChart",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "QuickChart": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "4719ec64-cc6b-490f-a1b9-3178877b2b66",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f81cbf6508abd4938d9aad92bf319d7bc08d1cc64ee72bf3312d07ed48caa023"
+  },
+  "nodeGroups": [],
+  "id": "PL6LlKKhgfeLKMMl",
+  "tags": []
+}
